@@ -1,0 +1,164 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Electronic Health cum Care record for patient pertaining to a city.
+ */
+namespace org.ehr.basic
+
+concept InsuranceMap {
+  o String personId
+  o Double amountInsured
+}
+
+// Name of companies considered for providing insurance claims
+enum InsuranceProviders{
+  o NICL
+  o PVT
+}
+// Name of hospitals used for this project
+enum Hospitals {
+  o AASTHA
+  o REGENCY
+  o NOVA
+  o KABEER
+  o CONTACARE_EYE
+}
+// List of medicines in circulationn city-wide 
+//enum Medicine {
+//  o ASETAMINOPHIN
+//  o ASPIRIN
+//  o PARACETAMOL
+//  o AMLODIPINE
+//  o FLUOXETINE
+//  o ALPRAZOLAM
+//}
+// List of pathological tests considered for this project
+enum Tests {
+  o LFT
+  o URINALYSIS
+  o INR
+  o BLOODTEST
+}
+// Disease-infected part of human body
+enum DiseaseCategory{
+  o EYE
+  o HEART
+  o EAR
+  o SKIN
+  o GENITAL
+  o MISC
+}
+
+// Transaction to get appointment
+transaction confirmAppoint {
+  --> Patient patient
+  --> Doctor doctor
+  --> Appointment appoint
+}
+// Transaction for recording interaction between doctor and patient during appointment
+transaction consult {
+  --> Patient patient
+  --> Doctor doctor
+  --> Appointment appoint
+  --> Prescription presc
+  --> MedPresc medicine
+}
+// Transaction to record purchase of medicines by patient from drugstore
+transaction buyMed {
+  --> Patient patient
+  --> Chemist chemist
+}
+// Transaction to record test conducted by pathology lab on patient
+transaction buyTest {
+  --> Patient patient
+  --> PathLab pathlab
+}
+
+// Medical instructions is considered as an asset of this business logic
+asset MedPresc identified by medPrescId {
+  o String medPrescId						// Medicine prescription ID
+  // o Medicine medicineType				// Type of medicine
+  o Long mgs								// strength of medicine
+  o String instruction						// Intake instructions
+  o Long perDay								// Number of tablets/ tbsp/ tsp medicine has to be taken
+}
+// Appointment is considered as an asset for this business logic
+asset Appointment identified by appointmentId{
+  o String appointmentId						// Appointment ID
+  o String status								// Status of appointment
+  o Boolean isInsured							// Whether patient is insured
+  o String description							// Description of appointment
+  o DiseaseCategory group						// Disease area reported by patient
+  --> Doctor assigned optional					// Annoted doctor
+  --> Patient patient optional					// Patient details
+  --> Insurance insuranceId optional			// Insurance company
+  o Double consultanceFee optional				// Consultance Fee
+}
+// Insurance claim is considered as an asset for this business logic
+asset Insurance identified by InsuranceId {
+  o String InsuranceId							// Insurance personnel ID
+  o InsuranceProviders provider					// Personnel's company
+  --> Patient patient							// Record of patient
+  o Double ensuredAmount						// Amount of insurance
+}
+// Receipt is considered as an asset for this business logic
+asset Receipt identified by receiptID {
+  o String receiptID						// Receipt ID
+  o String providerID						// Receipt provider ID
+  o String providedTo						// Receipt provided to ID
+  o Double amountPaid						// Amount paid against service and/or goods
+  o DateTime logTime						// Log time 
+}
+// Prescription is considered as an asset of this business logic
+asset Prescription identified by prescriptionId {
+  o String prescriptionId							// Prescription ID
+  o Boolean isMedPrescribed							// Whether medicine was prescribed to patient
+  o MedPresc[] prescribed optional					// List of medicines prescribed
+  o Boolean isTestPrescribed						// Whether medical tests were prescribed to patient
+  o Tests test optional								// Test conducted on patient
+  --> Appointment appoint							// Appointment associated with this prescription 
+  o String[] test_report optional					// List of tests reports given by pathology lab
+  o Receipt[] receipt optional						// List of all receipts during treatment phase
+}
+
+// An abstract citizen which shows that everyone of this project will have 
+// these factors alongwith add-ons
+abstract participant Citizen identified by id {
+  o String id									// Universal ID of citizen
+  o String firstName							// First Name of citizen
+  o String lastName								// Last Name of citizen
+}
+// Doctor is considered as a participant for this business logic
+participant Doctor extends Citizen {
+  o Hospitals hospital							// Associated hospital
+  o Double consultanceFee						// Consultance Fee of doctor
+  o DiseaseCategory speciality					// Type of disease s(he) specializes in
+}
+// Chemist is considered as a participant for this business logic
+participant Chemist extends Citizen {
+//  o Medicine [] listOfMedicine					// List of medicines kept in his store
+  o Double costPermg							// Cost per mg of each medicine 
+}
+// Pathology Laboratory Instructor is considered as a participant for this business logic
+participant PathLab extends Citizen {
+  o String labName								// Name of Pathology
+  // o Tests[] test								// Types of tests conducted at their lab
+  o Double cost									// Cost of each test
+}
+// Patient is considered as a participant for this business logic
+participant Patient extends Citizen {
+  o Double debt 								// Debt to be paid by patient
+  o DiseaseCategory disease						// Type of current ailment incurred by patient 
+}

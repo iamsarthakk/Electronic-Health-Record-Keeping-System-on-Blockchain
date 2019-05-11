@@ -1,0 +1,120 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Electronic Health cum Care record for patient pertaining to a city.
+ */
+namespace org.ehr.basic
+
+concept Address {
+  o String road
+  o String area
+  o String zipcode
+}
+enum Hospitals {
+  o AASTHA
+  o REGENCY
+  o NOVA
+  o KABEER
+  o CONTACARE_EYE
+}
+enum Medicines {
+  o ASETAMINOPHIN
+  o ASPIRIN
+  o PARACETAMOL
+  o AMLODIPINE
+  o FLUOXETINE
+  o ALPRAZOLAM
+}
+enum Tests {
+  o LFT
+  o URINALYSIS
+  o INR
+  o BLOODTEST
+}
+
+transaction Appointment {
+  --> Prescription pPaper
+  --> Patient visitor
+  --> Doctor host
+}
+transaction Drugstore {
+  --> Patient visitor
+  --> Chemist retailer
+}
+transaction Inventory {
+  --> Medicine medicine
+  --> Chemist retailer
+}
+transaction Reimbursement {
+  --> Claim cPaper
+  --> InsuranceCompany host
+  --> Patient visitor
+}
+transaction Test {
+  --> Patient visitor
+  --> PathLab host
+}
+
+asset Medicine identified by medicineId {
+  o String medicineId
+  o String medicineName
+  o Medicines medicineType
+  o Double quantity
+  o Double cost
+  o String expiryDate
+}
+asset Prescription identified by prescriptionId {
+  o String prescriptionId
+  o Medicines prescribed
+  o Integer tests
+  o Boolean testDone
+  o Boolean medicinesBought
+  --> Doctor doctor
+}
+asset Claim identified by claimId {
+  o String claimId
+  o Double cover
+  --> InsuranceCompany manager
+  o Boolean payment
+}
+
+abstract participant Citizen identified by id {
+  o String id
+  o String firstName
+  o String lastName
+  o Address address optional
+}
+participant Doctor extends Citizen {
+  o String doctorId
+  o Hospitals hospital
+  o Double consultanceFee
+}
+participant Chemist extends Citizen {
+  o String shopId
+  o Medicine [] listOfMedicine
+}
+participant PathLab extends Citizen {
+  o String labName
+  o Tests test
+  o Double [] cost
+}
+participant InsuranceCompany extends Citizen {
+  o String companyName
+}
+participant Patient extends Citizen {
+  o Prescription [] prescriptions
+  --> Claim [] claims
+  o Double debt 
+}
